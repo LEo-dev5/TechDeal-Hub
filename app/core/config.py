@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Docker용 변수(POSTGRES_*, REDIS_PASSWORD 등) 무시
 
 
 settings = Settings()
