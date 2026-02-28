@@ -25,11 +25,10 @@ def verify_admin_key(api_key: str = Security(_API_KEY_HEADER)) -> str:
 
 # ── 허용 소스 목록 (Enum으로 강제) ────────────────────────
 class SourceName(str, Enum):
-    ppomppu   = "뽐뿌"
-    clien     = "클리앙"
-    fmkorea   = "펨코"
+    ppomppu    = "뽐뿌"
+    clien      = "클리앙"
     quasarzone = "퀘이사존"
-    ruliweb   = "루리웹"
+    ruliweb    = "루리웹"
 
 
 # ── 엔드포인트 ────────────────────────────────────────────

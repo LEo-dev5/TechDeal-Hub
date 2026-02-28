@@ -21,7 +21,7 @@ def _is_safe_url(url: Optional[str]) -> bool:
         return False
 
 from scraper.extractor import extract_category_hint, extract_model
-from scraper.sites import ppomppu, clien, fmkorea, quasarzone, ruliweb
+from scraper.sites import ppomppu, clien, quasarzone, ruliweb
 
 # 단일 소스: app.core.config → 없으면 환경변수 직접 참조
 try:
@@ -133,7 +133,7 @@ def run_pipeline(sources: Optional[list[str]] = None):
         sources: 실행할 소스 목록 (None이면 전체)
     """
     if sources is None:
-        sources = ["뽐뿌", "클리앙", "펨코", "퀘이사존", "루리웹"]
+        sources = ["뽐뿌", "클리앙", "퀘이사존", "루리웹"]
 
     stats = {"inserted": 0, "updated": 0, "errors": 0}
 
@@ -146,8 +146,6 @@ def run_pipeline(sources: Optional[list[str]] = None):
                 raw_deals = ppomppu.crawl(pages=2)
             elif source_name == "클리앙":
                 raw_deals = clien.crawl(pages=2)
-            elif source_name == "펨코":
-                raw_deals = fmkorea.crawl(pages=2)
             elif source_name == "퀘이사존":
                 raw_deals = quasarzone.crawl(pages=2)
             elif source_name == "루리웹":

@@ -27,10 +27,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # ── FastAPI 앱 (프로덕션에서 Swagger 비활성화) ─────────────
 limiter = Limiter(key_func=get_remote_address)
 
+_DESCRIPTION = """
+전자제품 핫딜 애그리게이터 API
+
+**법적 고지**: 본 서비스는 비영리 목적으로 뽐뿌·클리앙·퀘이사존·루리웹의 공개 게시물을
+링크·요약 형태로만 집약합니다. 모든 콘텐츠 저작권은 원저작자에게 귀속됩니다.
+저작권 침해 신고: contact@techdeal-hub.local
+"""
+
 app = FastAPI(
     title=settings.app_title,
     version=settings.app_version,
-    description="전자제품 핫딜 애그리게이터 API",
+    description=_DESCRIPTION,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     openapi_url="/openapi.json" if settings.debug else None,

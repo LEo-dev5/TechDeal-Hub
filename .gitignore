@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 환경변수 (절대 커밋 금지)
+.env
+.env.*
+!.env.example
+
+# DB / 스케줄러
+*.db
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat.pid
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 로그
+*.log
+logs/
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+frontend/out/
+
+# 테스트
+.pytest_cache/
+.coverage
+htmlcov/
