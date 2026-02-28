@@ -1,6 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -9,18 +11,21 @@ from app.core.database import get_db
 from app.models.deal import Category, Deal, Source
 
 router = APIRouter(prefix="/deals", tags=["deals"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("", response_model=DealsResponse)
+@limiter.limit("60/minute")
 def get_deals(
+    request: Request,
     page: int = Query(1, ge=1, description="페이지 번호"),
-    size: int = Query(20, ge=1, le=100, description="페이지 크기"),
+    size: int = Query(20, ge=1, le=50, description="페이지 크기 (최대 50)"),
     category_id: Optional[int] = Query(None, description="카테고리 ID 필터"),
     source_id: Optional[int] = Query(None, description="소스 ID 필터"),
     active_only: bool = Query(True, description="진행중 핫딜만 조회"),
-    keyword: Optional[str] = Query(None, description="제목/모델명 검색"),
-    min_price: Optional[int] = Query(None, description="최소 가격"),
-    max_price: Optional[int] = Query(None, description="최대 가격"),
+    keyword: Optional[str] = Query(None, max_length=100, description="제목/모델명 검색 (최대 100자)"),
+    min_price: Optional[int] = Query(None, ge=0, description="최소 가격"),
+    max_price: Optional[int] = Query(None, ge=0, description="최대 가격"),
     db: Session = Depends(get_db),
 ):
     """핫딜 목록 조회"""
@@ -53,7 +58,8 @@ def get_deals(
 
 
 @router.get("/stats", response_model=StatsResponse)
-def get_stats(db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def get_stats(request: Request, db: Session = Depends(get_db)):
     """통계 조회"""
     total_deals = db.scalar(select(func.count(Deal.id)))
     active_deals = db.scalar(select(func.count(Deal.id)).where(Deal.is_active == True))
@@ -80,7 +86,8 @@ def get_stats(db: Session = Depends(get_db)):
 
 
 @router.get("/{deal_id}", response_model=DealDetail)
-def get_deal(deal_id: int, db: Session = Depends(get_db)):
+@limiter.limit("120/minute")
+def get_deal(request: Request, deal_id: int, db: Session = Depends(get_db)):
     """딜 상세 조회"""
     deal = db.scalar(
         select(Deal)

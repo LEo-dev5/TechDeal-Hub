@@ -6,7 +6,7 @@ import os
 import psycopg2
 from pathlib import Path
 
-DB_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:changeme@localhost:5432/techdeal")
+DB_URL = os.environ["DATABASE_URL"]  # 기본값 없음 — .env 설정 필수
 
 
 def init_db():

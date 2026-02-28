@@ -4,14 +4,31 @@
 import os
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urlparse
 
 import psycopg2
 import psycopg2.extras
 
+
+def _is_safe_url(url: Optional[str]) -> bool:
+    """썸네일 URL이 안전한지 검증 (http/https 스킴만 허용)"""
+    if not url:
+        return False
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    except Exception:
+        return False
+
 from scraper.extractor import extract_category_hint, extract_model
 from scraper.sites import ppomppu, clien, fmkorea, quasarzone, ruliweb
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:changeme@localhost:5432/techdeal")
+# 단일 소스: app.core.config → 없으면 환경변수 직접 참조
+try:
+    from app.core.config import settings
+    DATABASE_URL = settings.database_url
+except Exception:
+    DATABASE_URL = os.environ["DATABASE_URL"]  # 기본값 없음 — 미설정 시 즉시 오류
 
 # 소스 이름 → DB source_id 캐시
 _source_id_cache: dict[str, int] = {}
@@ -95,7 +112,7 @@ def upsert_deal(conn, source_name: str, raw) -> tuple[int, bool]:
         "currency": "KRW",
         "mall_url": raw.mall_url,
         "source_url": raw.source_url,
-        "thumbnail_url": raw.thumbnail_url,
+        "thumbnail_url": raw.thumbnail_url if _is_safe_url(raw.thumbnail_url) else None,
         "upvotes": raw.upvotes,
         "comments_count": raw.comments_count,
         "is_active": raw.is_active,

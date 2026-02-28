@@ -16,7 +16,7 @@ BASE_URL = "https://bbs.ruliweb.com"
 LIST_URL = f"{BASE_URL}/market/board/1020"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "User-Agent": "TechDealBot/1.0 (+https://github.com/LEo-dev5/TechDeal-Hub)",
     "Accept-Language": "ko-KR,ko;q=0.9",
     "Referer": "https://bbs.ruliweb.com/",
 }

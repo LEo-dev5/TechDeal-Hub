@@ -1,4 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
 from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
@@ -14,7 +18,7 @@ class Source(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     base_url: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     deals: Mapped[list["Deal"]] = relationship("Deal", back_populates="source")
 
@@ -25,7 +29,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     parent_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     deals: Mapped[list["Deal"]] = relationship("Deal", back_populates="category")
 
@@ -60,8 +64,8 @@ class Deal(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     posted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    scraped_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    scraped_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     source: Mapped["Source"] = relationship("Source", back_populates="deals")
     category: Mapped[Optional["Category"]] = relationship("Category", back_populates="deals")

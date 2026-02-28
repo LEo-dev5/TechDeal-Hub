@@ -8,7 +8,11 @@ import psycopg2
 
 from worker.celery_app import app
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:changeme@localhost:5432/techdeal")
+try:
+    from app.core.config import settings
+    DATABASE_URL = settings.database_url
+except Exception:
+    DATABASE_URL = os.environ["DATABASE_URL"]  # 기본값 없음 — 미설정 시 즉시 오류
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
