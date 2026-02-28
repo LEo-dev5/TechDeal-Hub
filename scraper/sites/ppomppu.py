@@ -33,6 +33,10 @@ TECH_KEYWORDS = [
     "이어폰", "헤드폰", "스피커", "키보드", "마우스",
     "nas", "공유기", "카메라", "렌즈", "프린터",
     "tv", "oled", "qled", "청소기", "에어팟",
+    "충전기", "충전", "케이블", "허브", "블루투스",
+    "apple", "samsung", "lg전자", "삼성", "애플",
+    "케이스", "배터리", "보조배터리", "usb",
+    "게이밍", "gaming", "조이스틱", "패드",
 ]
 
 
@@ -106,19 +110,19 @@ def fetch_list_page(page: int = 1, delay: float = 3.0) -> list[RawDeal]:
     soup = BeautifulSoup(resp.text, "lxml")
     deals: list[RawDeal] = []
 
-    # 뽐뿌 게시판 tr 목록 파싱
-    rows = soup.select("tr.baseList, tr.baseList2")
+    # 뽐뿌 게시판 tr 목록 파싱 (실제 HTML: tr.baseList)
+    rows = soup.select("tr.baseList")
     for row in rows:
         try:
-            # 제목 셀
-            title_td = row.select_one("td.baseList-title")
-            if not title_td:
-                continue
-
-            title_a = title_td.select_one("a.baseList-title")
+            # 제목 링크: td.title > div.baseList-box > div.baseList-cover > a.baseList-title
+            title_a = row.select_one("a.baseList-title")
             if not title_a:
                 continue
 
+            # span 내부 텍스트 (em 태그 제외하고 순수 제목만)
+            em = title_a.select_one("em.baseList-head")
+            if em:
+                em.decompose()
             title = title_a.get_text(strip=True)
             if not title:
                 continue
@@ -133,49 +137,49 @@ def fetch_list_page(page: int = 1, delay: float = 3.0) -> list[RawDeal]:
             if not post_id_match:
                 continue
             post_id = post_id_match.group(1)
-            source_url = BASE_URL + "/zboard/" + href if href.startswith("view") else BASE_URL + href
+            source_url = BASE_URL + "/zboard/" + href if not href.startswith("http") else href
 
-            # 쇼핑몰 링크 (외부 링크 버튼)
-            mall_link = row.select_one("a.baseList-buy")
-            mall_url = mall_link.get("href") if mall_link else None
+            # 쇼핑몰 링크 (없음 — 뽐뿌는 게시글 내부에 링크 있음)
+            mall_url = None
 
-            # 가격
-            price_td = row.select_one("td.baseList-price")
+            # 가격 (뽐뿌 목록에는 별도 가격 열 없음)
             price = None
-            if price_td:
-                price_text = price_td.get_text(strip=True)
-                price = parse_price(price_text)
 
-            # 추천수
+            # 추천수: td.baseList-rec "3 - 0" 형식에서 첫 번째 숫자
             upvote_td = row.select_one("td.baseList-rec")
             upvotes = 0
             if upvote_td:
-                upvote_text = upvote_td.get_text(strip=True)
-                upvote_nums = re.findall(r"\d+", upvote_text)
+                upvote_nums = re.findall(r"\d+", upvote_td.get_text())
                 upvotes = int(upvote_nums[0]) if upvote_nums else 0
 
-            # 댓글수
-            comment_span = title_td.select_one("span.baseList-c")
+            # 댓글수: span.baseList-c
+            comment_span = row.select_one("span.baseList-c")
             comments_count = 0
             if comment_span:
-                c_text = comment_span.get_text(strip=True).strip("[]")
-                comments_count = int(c_text) if c_text.isdigit() else 0
+                c_text = re.sub(r"[^\d]", "", comment_span.get_text())
+                comments_count = int(c_text) if c_text else 0
 
-            # 날짜
-            date_td = row.select_one("td.baseList-space time, td.baseList-date")
+            # 날짜: time.baseList-time (title 속성에 전체 날짜)
+            time_el = row.select_one("time.baseList-time")
             posted_at = datetime.now()
-            if date_td:
-                dt_attr = date_td.get("datetime") or date_td.get_text(strip=True)
-                parsed = parse_posted_at(dt_attr)
-                if parsed:
-                    posted_at = parsed
+            if time_el:
+                # title 속성: "26.02.27 19:58:48", 텍스트: "26/02/27"
+                dt_text = time_el.get("title") or time_el.get_text(strip=True)
+                # title 속성 포맷: "26.02.27 19:58:48"
+                for fmt in ("%y.%m.%d %H:%M:%S", "%y/%m/%d", "%y.%m.%d"):
+                    try:
+                        posted_at = datetime.strptime(dt_text.strip(), fmt)
+                        break
+                    except ValueError:
+                        continue
 
-            # 썸네일
-            thumb_img = row.select_one("img.baseList-thumb")
+            # 썸네일: a.baseList-thumb > img
+            thumb_img = row.select_one("a.baseList-thumb img")
             thumbnail_url = None
             if thumb_img:
                 src = thumb_img.get("src", "")
-                thumbnail_url = BASE_URL + src if src.startswith("/") else src
+                if src and "noimage" not in src:
+                    thumbnail_url = "https:" + src if src.startswith("//") else src
 
             deals.append(RawDeal(
                 source_post_id=post_id,

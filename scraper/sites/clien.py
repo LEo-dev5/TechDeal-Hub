@@ -13,7 +13,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://www.clien.net"
-LIST_URL = f"{BASE_URL}/service/board/jiankr"
+LIST_URL = f"{BASE_URL}/service/board/jirum"
 
 HEADERS = {
     "User-Agent": "TechDealBot/1.0 (+https://github.com/LEo-dev5/TechDeal-Hub)",
@@ -24,11 +24,20 @@ HEADERS = {
 SOLD_OUT_KEYWORDS = ["[종료]", "[품절]", "품절", "마감", "sold out"]
 
 TECH_KEYWORDS = [
+    # 기기
     "노트북", "맥북", "모니터", "그래픽카드", "gpu", "rtx", "gtx",
     "cpu", "ryzen", "intel", "ssd", "nvme", "ddr", "ram", "메모리",
     "스마트폰", "아이폰", "갤럭시", "아이패드", "이어폰", "헤드폰",
     "키보드", "마우스", "nas", "공유기", "카메라", "tv", "oled",
-    "에어팟", "청소기", "스피커", "태블릿",
+    "에어팟", "청소기", "스피커", "태블릿", "케이스", "충전기", "충전",
+    # 앱/소프트웨어 (클리앙 jirum 특성)
+    "ios", "android", "wearos", "애플", "apple", "samsung", "구글", "google",
+    "앱", "app", "게임", "game", "무료", "할인", "맥세이프", "magsafe",
+    "qi2", "qi ", "usb", "hdmi", "dp ", "블루투스", "bluetooth", "wifi",
+    "airpods", "galaxy", "iphone", "ipad", "macbook", "watch",
+    # 액세서리
+    "케이블", "허브", "어댑터", "배터리", "보조배터리", "파워뱅크",
+    "거치대", "스탠드", "웹캠", "마이크", "스트리밍", "조이스틱",
 ]
 
 
@@ -85,16 +94,12 @@ def fetch_list_page(page: int = 0, delay: float = 3.0) -> list[RawDeal]:
     soup = BeautifulSoup(resp.text, "lxml")
     deals: list[RawDeal] = []
 
-    rows = soup.select("div.list_item.symph_row")
+    # 실제 HTML: div.list_item.jirum (공지/홍보 제외)
+    rows = soup.select("div.list_item.jirum")
     for row in rows:
         try:
-            # 공지글 스킵
-            if row.select_one("span.notice_tag"):
-                continue
-
-            title_a = row.select_one("span.subject_fixed a.list_subject")
-            if not title_a:
-                title_a = row.select_one("a.list_subject")
+            # 제목: div.list_title > span.list_subject > a
+            title_a = row.select_one("div.list_title span.list_subject a")
             if not title_a:
                 continue
 
@@ -109,14 +114,10 @@ def fetch_list_page(page: int = 0, delay: float = 3.0) -> list[RawDeal]:
             post_id = post_id_match.group(1)
             source_url = BASE_URL + href if href.startswith("/") else href
 
-            # 댓글수
-            reply_span = row.select_one("span.reply_symph")
+            # 댓글수 (클리앙 jirum 목록에는 댓글수 없음)
             comments_count = 0
-            if reply_span:
-                c_text = re.sub(r"[^\d]", "", reply_span.get_text())
-                comments_count = int(c_text) if c_text else 0
 
-            # 날짜
+            # 날짜: div.list_time > span.time > span.timestamp
             date_span = row.select_one("span.timestamp")
             posted_at = datetime.now()
             if date_span:
@@ -128,12 +129,26 @@ def fetch_list_page(page: int = 0, delay: float = 3.0) -> list[RawDeal]:
                     except ValueError:
                         continue
 
-            # 좋아요
-            like_span = row.select_one("span.symph_count")
+            # 조회수 (좋아요 대신)
+            hit_span = row.select_one("div.list_hit span.hit")
             upvotes = 0
-            if like_span:
-                like_text = re.sub(r"[^\d]", "", like_span.get_text())
-                upvotes = int(like_text) if like_text else 0
+            if hit_span:
+                hit_text = hit_span.get_text(strip=True).replace(",", "").replace(".", "").replace(" ", "")
+                # "26.3 k" 형태 처리
+                if "k" in hit_text.lower():
+                    num = re.sub(r"[^\d]", "", hit_text)
+                    upvotes = int(num) * 100 if num else 0
+                else:
+                    num = re.sub(r"[^\d]", "", hit_text)
+                    upvotes = int(num) if num else 0
+
+            # 썸네일
+            thumb_img = row.select_one("div.list_image img")
+            thumbnail_url = None
+            if thumb_img:
+                src = thumb_img.get("src", "")
+                if src and "noimage" not in src:
+                    thumbnail_url = src
 
             deals.append(RawDeal(
                 source_post_id=post_id,
@@ -144,6 +159,7 @@ def fetch_list_page(page: int = 0, delay: float = 3.0) -> list[RawDeal]:
                 upvotes=upvotes,
                 comments_count=comments_count,
                 posted_at=posted_at,
+                thumbnail_url=thumbnail_url,
                 is_active=not is_sold_out(title),
             ))
 
