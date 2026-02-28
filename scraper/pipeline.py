@@ -11,7 +11,7 @@ import psycopg2.extras
 from scraper.extractor import extract_category_hint, extract_model
 from scraper.sites import ppomppu, clien, fmkorea, quasarzone, ruliweb
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:REDACTED@localhost:5432/techdeal")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:changeme@localhost:5432/techdeal")
 
 # 소스 이름 → DB source_id 캐시
 _source_id_cache: dict[str, int] = {}

@@ -8,7 +8,7 @@ import psycopg2
 
 from worker.celery_app import app
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:REDACTED@localhost:5432/techdeal")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:changeme@localhost:5432/techdeal")
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
