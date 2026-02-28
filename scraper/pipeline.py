@@ -9,7 +9,7 @@ import psycopg2
 import psycopg2.extras
 
 from scraper.extractor import extract_category_hint, extract_model
-from scraper.sites import ppomppu, clien
+from scraper.sites import ppomppu, clien, fmkorea, quasarzone, ruliweb
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://techdeal:REDACTED@localhost:5432/techdeal")
 
@@ -116,7 +116,7 @@ def run_pipeline(sources: Optional[list[str]] = None):
         sources: 실행할 소스 목록 (None이면 전체)
     """
     if sources is None:
-        sources = ["뽐뿌", "클리앙"]
+        sources = ["뽐뿌", "클리앙", "펨코", "퀘이사존", "루리웹"]
 
     stats = {"inserted": 0, "updated": 0, "errors": 0}
 
@@ -129,6 +129,12 @@ def run_pipeline(sources: Optional[list[str]] = None):
                 raw_deals = ppomppu.crawl(pages=2)
             elif source_name == "클리앙":
                 raw_deals = clien.crawl(pages=2)
+            elif source_name == "펨코":
+                raw_deals = fmkorea.crawl(pages=2)
+            elif source_name == "퀘이사존":
+                raw_deals = quasarzone.crawl(pages=2)
+            elif source_name == "루리웹":
+                raw_deals = ruliweb.crawl(pages=2)
             else:
                 print(f"[파이프라인] 알 수 없는 소스: {source_name}")
                 continue

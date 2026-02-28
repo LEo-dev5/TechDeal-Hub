@@ -29,17 +29,35 @@ app.conf.update(
 
 # 주기적 크롤링 스케줄
 app.conf.beat_schedule = {
-    # 뽐뿌: 10분마다 크롤링
+    # 뽐뿌: 10분마다
     "crawl-ppomppu-every-10min": {
         "task": "worker.tasks.crawl_source",
         "schedule": crontab(minute="*/10"),
         "args": ("뽐뿌",),
     },
-    # 클리앙: 15분마다 크롤링
+    # 클리앙: 15분마다
     "crawl-clien-every-15min": {
         "task": "worker.tasks.crawl_source",
         "schedule": crontab(minute="*/15"),
         "args": ("클리앙",),
+    },
+    # 펨코: 10분마다
+    "crawl-fmkorea-every-10min": {
+        "task": "worker.tasks.crawl_source",
+        "schedule": crontab(minute="*/10"),
+        "args": ("펨코",),
+    },
+    # 퀘이사존: 10분마다
+    "crawl-quasarzone-every-10min": {
+        "task": "worker.tasks.crawl_source",
+        "schedule": crontab(minute="*/10"),
+        "args": ("퀘이사존",),
+    },
+    # 루리웹: 15분마다
+    "crawl-ruliweb-every-15min": {
+        "task": "worker.tasks.crawl_source",
+        "schedule": crontab(minute="*/15"),
+        "args": ("루리웹",),
     },
     # 품절 정리: 매일 새벽 4시
     "cleanup-expired-deals": {
